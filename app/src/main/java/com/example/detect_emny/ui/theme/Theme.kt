@@ -1,4 +1,4 @@
-package com.example.detect_emny.ui.theme
+package com.example.detect_emeny.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -34,7 +34,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun Detect_emnyTheme(
+fun Detect_emenyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
