@@ -4,6 +4,8 @@
 
 Detect Emeny 是一款基于 **NCNN** 框架和 **YOLO11n-Pose** 模型的 Android 实时人体姿态识别应用。它不仅提供高性能的端侧 AI 识别体验，还融入了丰富的互动游戏元素。
 
+![Gameplay Preview](lv_0_20260627104512.gif)
+
 ## 主要功能
 
 ### 1. 实时姿态估计
@@ -16,6 +18,7 @@ Detect Emeny 是一款基于 **NCNN** 框架和 **YOLO11n-Pose** 模型的 Andro
 *   **水果与炸弹**：
     *   **丰富种类**：随机生成多种水果（苹果、香蕉、西瓜等）。
     *   **黑色炸弹**：随机出现黑色炸弹 (💣)，击中将**扣除 50 分**，增加游戏挑战性。
+*   **表情包头显**：一键开启“头戴模式”，使用有趣的表情包（😎, 🤡, 🤖 等）遮挡面部，支持多种表情切换。
 *   **切水果挑战**：基于武器尖端的实时碰撞检测，触发爆炸音效与视觉反馈。
 
 ### 3. 实时游戏配置与排行榜
@@ -40,6 +43,8 @@ Detect Emeny 是一款基于 **NCNN** 框架和 **YOLO11n-Pose** 模型的 Andro
 
 Detect Emeny is an Android application that performs real-time human pose estimation using the **NCNN** framework and **YOLO11n-Pose** model, featuring interactive gaming elements.
 
+![Gameplay Preview](lv_0_20260627104512.gif)
+
 ## Features
 
 ### 1. Real-Time Pose Estimation
@@ -52,6 +57,7 @@ Detect Emeny is an Android application that performs real-time human pose estima
 *   **Fruits & Bombs**:
     *   Slice various fruits for points.
     *   Avoid **Black Bombs (💣)**: Hitting a bomb results in a **50-point penalty**.
+*   **Emoji Head Mask**: Toggle "Head Mask" mode to cover your face with fun emojis (😎, 🤡, 🤖, etc.). Includes an emoji picker to choose your favorite mask.
 *   **Collision Detection**: Real-time tracking of weapon tips for accurate slicing feedback.
 
 ### 3. Real-Time Config & Leaderboard
