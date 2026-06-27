@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "detect_emny"
+rootProject.name = "detect_emeny"
 include(":app")

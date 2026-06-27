@@ -1,4 +1,4 @@
-package com.example.detect_emny
+package com.example.detect_emeny
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.detect_emny", appContext.packageName)
+        assertEquals("com.example.detect_emeny", appContext.packageName)
     }
 }

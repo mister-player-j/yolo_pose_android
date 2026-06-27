@@ -1,4 +1,4 @@
-package com.example.detect_emny
+package com.example.detect_emeny
 
 import org.junit.Test
 

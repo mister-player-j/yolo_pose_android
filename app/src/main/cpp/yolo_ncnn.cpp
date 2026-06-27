@@ -43,7 +43,7 @@ static jmethodID addMethod = NULL;
 extern "C" {
 
 JNIEXPORT jboolean JNICALL
-Java_com_example_detect_1emny_YoloPoseDetector_init(JNIEnv* env, jobject thiz, jobject assetManager) {
+Java_com_example_detect_1emeny_YoloPoseDetector_init(JNIEnv* env, jobject thiz, jobject assetManager) {
     ncnn::Option opt;
     opt.lightmode = true;
     opt.num_threads = 4;
@@ -61,15 +61,15 @@ Java_com_example_detect_1emny_YoloPoseDetector_init(JNIEnv* env, jobject thiz, j
     }
 
     if (clsPose == NULL) {
-        jclass localPose = env->FindClass("com/example/detect_emny/PoseDetection");
+        jclass localPose = env->FindClass("com/example/detect_emeny/model/PoseDetection");
         clsPose = (jclass)env->NewGlobalRef(localPose);
-        constructorPose = env->GetMethodID(clsPose, "<init>", "(FLcom/example/detect_emny/PoseBox;Ljava/util/List;)V");
+        constructorPose = env->GetMethodID(clsPose, "<init>", "(FLcom/example/detect_emeny/model/PoseBox;Ljava/util/List;)V");
 
-        jclass localBox = env->FindClass("com/example/detect_emny/PoseBox");
+        jclass localBox = env->FindClass("com/example/detect_emeny/model/PoseBox");
         clsBox = (jclass)env->NewGlobalRef(localBox);
         constructorBox = env->GetMethodID(clsBox, "<init>", "(FFFF)V");
 
-        jclass localKpt = env->FindClass("com/example/detect_emny/PoseKeypoint");
+        jclass localKpt = env->FindClass("com/example/detect_emeny/model/PoseKeypoint");
         clsKpt = (jclass)env->NewGlobalRef(localKpt);
         constructorKpt = env->GetMethodID(clsKpt, "<init>", "(FFF)V");
 
@@ -128,7 +128,7 @@ static void nms_sorted_bboxes(const std::vector<Object>& objects, std::vector<in
 }
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_example_detect_1emny_YoloPoseDetector_detect(JNIEnv* env, jobject thiz, jobject bitmap) {
+Java_com_example_detect_1emeny_YoloPoseDetector_detect(JNIEnv* env, jobject thiz, jobject bitmap) {
     AndroidBitmapInfo info;
     AndroidBitmap_getInfo(env, bitmap, &info);
     const int width = info.width;
