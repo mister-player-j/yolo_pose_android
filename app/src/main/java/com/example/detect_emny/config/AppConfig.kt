@@ -29,9 +29,11 @@ object AppConfig {
     const val FRUIT_SPAWN_INTERVAL_MS_MIN = 250L // 4 fruits per second
     const val FRUIT_SPAWN_INTERVAL_MS_MAX = 1000L // 1 fruit per second
     const val FRUIT_LIFETIME_MS = 3000L
-    const val FRUIT_SPEED_MIN = 100f // pixels per second (scaled)
-    const val FRUIT_SPEED_MAX = 300f
+    const val FRUIT_SPEED_MIN = 200f // pixels per second (scaled)
+    const val FRUIT_SPEED_MAX = 600f
     const val WEAPON_SIZE_MULTIPLIER = 0.5f
     const val FRUIT_BASE_SIZE = 40f
     const val BOMB_RATE = 0.02f
+    
+    val HEAD_MASKS = listOf("😎", "🤡", "👻", "🤖", "🐱", "🐶", "🦊", "🦁")
 }

@@ -21,6 +21,7 @@ data class Fruit(
 class FruitManager {
     var fruits = mutableListOf<Fruit>()
     var totalScore = 0
+    var bombHitCount = 0
     private var lastSpawnTime = 0L
     private var lastUpdateTime = 0L
     private var nextSpawnInterval = 500L
@@ -60,17 +61,14 @@ class FruitManager {
         // Update positions
         fruits.forEach { fruit ->
             if (fruit.isBoomed == 0L) {
-                val basePos = fruit.position + fruit.velocity * deltaTime
+                // Update the position linearly
+                val lastPos = fruit.position
+                val nextPos = lastPos + fruit.velocity * deltaTime
                 
-                // Add some wavy motion perpendicular to velocity
-                val angle = kotlin.math.atan2(fruit.velocity.y, fruit.velocity.x)
-                val perpAngle = angle + kotlin.math.PI.toFloat() / 2f
-                val waveOffset = kotlin.math.sin(fruit.phase + (currentTime - fruit.spawnTime) / 200f) * fruit.amplitude
-                
-                fruit.position = basePos + Offset(
-                    kotlin.math.cos(perpAngle) * waveOffset * deltaTime * 10f,
-                    kotlin.math.sin(perpAngle) * waveOffset * deltaTime * 10f
-                )
+                // Add a small amount of "jitter" or wave that doesn't accumulate
+                // Actually, the simplest way to avoid drift is to only update position linearly
+                // and if we want wave, we apply it during drawing or keep a separate 'renderPosition'
+                fruit.position = nextPos
             }
         }
     }
@@ -108,15 +106,25 @@ class FruitManager {
         ))
     }
 
-    fun checkCollisions(weaponPos: Offset, weaponSize: Float) {
+    fun checkCollisions(weaponPoints: List<Offset>, weaponSize: Float, onHit: (Boolean) -> Unit) {
         val currentTime = System.currentTimeMillis()
         fruits.forEach { fruit ->
             if (fruit.isBoomed == 0L) {
-                val dist = (fruit.position - weaponPos).getDistance()
-                if (dist < weaponSize) { // Simple circular collision
-                    fruit.isBoomed = currentTime
-                    totalScore += fruit.scoreValue
-                    if (totalScore < 0) totalScore = 0
+                // Check each point along the weapon blade
+                for (point in weaponPoints) {
+                    val dist = (fruit.position - point).getDistance()
+                    if (dist < weaponSize) { // Simple circular collision
+                        fruit.isBoomed = currentTime
+                        if (fruit.isBomb) {
+                            bombHitCount++
+                            totalScore += fruit.scoreValue
+                        } else {
+                            totalScore += fruit.scoreValue
+                        }
+                        if (totalScore < 0) totalScore = 0
+                        onHit(fruit.isBomb)
+                        break // This fruit is hit, no need to check other points for it
+                    }
                 }
             }
         }
