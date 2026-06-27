@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.clickable
@@ -50,6 +51,7 @@ import com.example.detect_emeny.config.AppConfig
 import com.example.detect_emeny.model.*
 import com.example.detect_emeny.ui.components.*
 import com.example.detect_emeny.ui.theme.Detect_emenyTheme
+import com.example.detect_emeny.util.SoundManager
 import java.util.concurrent.Executors
 
 private const val TAG = "YoloPose"
@@ -106,35 +108,46 @@ private fun CameraPoseView() {
         }
     }
 
+    val detector = remember { try { YoloPoseDetector(context) } catch (e: Exception) { null } }
+    val soundManager = remember { SoundManager(context) }
+
     DisposableEffect(context) {
         usbHelper.register()
         onDispose { 
             usbHelper.unregister()
             usbHelper.shutdown()
             cameraExecutor.shutdown() 
+            soundManager.release()
         }
     }
-
-    val detector = remember { try { YoloPoseDetector(context) } catch (e: Exception) { null } }
     
     var poses by remember { mutableStateOf<List<PoseDetection>>(emptyList()) }
-    var frameSize by remember { mutableStateOf(FrameSize(1, 1)) }
+    val displayMetrics = context.resources.displayMetrics
+    var frameSize by remember { mutableStateOf(FrameSize(displayMetrics.widthPixels, displayMetrics.heightPixels)) }
     var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
     var maxScore by remember { mutableStateOf(0f) }
     var fps by remember { mutableStateOf(0) }
     var leftWeapon by remember { mutableStateOf("") }
     var rightWeapon by remember { mutableStateOf("sward2.png") }
-    var showPoseFrame by remember { mutableStateOf(true) }
+    var showPoseFrame by remember { mutableStateOf(false) }
     var showGameConfig by remember { mutableStateOf(false) }
+    var showHeadMask by remember { mutableStateOf(false) }
+    var currentHeadMask by remember { mutableStateOf("😎") }
+    var showEmojiPicker by remember { mutableStateOf(false) }
     val fruitManager = remember { FruitManager() }
     val scoreManager = remember { ScoreManager(context) }
     var showLeaderboard by remember { mutableStateOf(false) }
+    var showSaveSummary by remember { mutableStateOf(false) }
+    var lastSavedScore by remember { mutableStateOf(0) }
+    var lastSavedBombs by remember { mutableStateOf(0) }
+    var gameTick by remember { mutableStateOf(0L) }
 
     LaunchedEffect(Unit) {
         while (true) {
-            withFrameMillis {
+            withFrameMillis { time ->
                 if (frameSize.width > 1 && frameSize.height > 1) {
                     fruitManager.update(frameSize.width.toFloat(), frameSize.height.toFloat())
+                    gameTick = time // Force recomposition every frame
                 }
             }
         }
@@ -214,7 +227,13 @@ private fun CameraPoseView() {
                 leftWeapon = leftWeapon,
                 rightWeapon = rightWeapon,
                 fruitManager = fruitManager,
-                showPoseFrame = showPoseFrame
+                showPoseFrame = showPoseFrame,
+                showHeadMask = showHeadMask,
+                headMaskEmoji = currentHeadMask,
+                onHit = { isBomb ->
+                    if (isBomb) soundManager.playBomb() else soundManager.playSlice()
+                },
+                gameTick = gameTick
             )
 
             // Score Display
@@ -225,17 +244,31 @@ private fun CameraPoseView() {
                     .clickable { showLeaderboard = true },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "SCORE: ${fruitManager.totalScore}",
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.shadow(8.dp)
-                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = "SCORE: ${fruitManager.totalScore}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.shadow(8.dp)
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Text(
+                        text = "BOMBS: ${fruitManager.bombHitCount}",
+                        color = Color.Red.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 4.dp).shadow(4.dp)
+                    )
+                }
                 Button(
                     onClick = {
-                        scoreManager.addScore(fruitManager.totalScore)
+                        lastSavedScore = fruitManager.totalScore
+                        lastSavedBombs = fruitManager.bombHitCount
+                        scoreManager.addScore(lastSavedScore, lastSavedBombs)
+                        showSaveSummary = true
                         fruitManager.totalScore = 0
+                        fruitManager.bombHitCount = 0
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.5f)),
                     modifier = Modifier.padding(top = 4.dp).height(32.dp),
@@ -257,7 +290,10 @@ private fun CameraPoseView() {
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("${index + 1}. ${record.score}", fontWeight = FontWeight.Bold)
+                                    Column {
+                                        Text("${index + 1}. Score: ${record.score}", fontWeight = FontWeight.Bold)
+                                        Text("Bombs Hit: ${record.bombCount}", color = Color.Red.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall)
+                                    }
                                     val date = java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.getDefault())
                                         .format(java.util.Date(record.timestamp))
                                     Text(date, style = MaterialTheme.typography.bodySmall)
@@ -270,6 +306,23 @@ private fun CameraPoseView() {
                     },
                     confirmButton = {
                         TextButton(onClick = { showLeaderboard = false }) { Text("Close") }
+                    }
+                )
+            }
+
+            if (showSaveSummary) {
+                AlertDialog(
+                    onDismissRequest = { showSaveSummary = false },
+                    title = { Text("Game Over / Saved") },
+                    text = {
+                        Column {
+                            Text("Your final score: $lastSavedScore", style = MaterialTheme.typography.headlineSmall)
+                            Spacer(Modifier.height(8.dp))
+                            Text("Bombs hit: $lastSavedBombs", color = Color.Red, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showSaveSummary = false }) { Text("OK") }
                     }
                 )
             }
@@ -316,6 +369,58 @@ private fun CameraPoseView() {
             ) {
                 Text("Game Config")
             }
+
+            // Head Mask Toggle & Picker
+            Column(
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row {
+                    Button(
+                        onClick = { showHeadMask = !showHeadMask },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (showHeadMask) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.6f)
+                        )
+                    ) {
+                        Text(if (showHeadMask) "Mask On" else "Mask Off")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = { showEmojiPicker = true },
+                        enabled = showHeadMask
+                    ) {
+                        Text(currentHeadMask)
+                    }
+                }
+            }
+        }
+
+        if (showEmojiPicker) {
+            AlertDialog(
+                onDismissRequest = { showEmojiPicker = false },
+                title = { Text("Choose Head Mask") },
+                text = {
+                    Column {
+                        val emojis = AppConfig.HEAD_MASKS
+                        val rows = emojis.chunked(4)
+                        rows.forEach { rowEmojis ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                rowEmojis.forEach { emoji ->
+                                    TextButton(onClick = {
+                                        currentHeadMask = emoji
+                                        showEmojiPicker = false
+                                    }) {
+                                        Text(emoji, fontSize = 32.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showEmojiPicker = false }) { Text("Close") }
+                }
+            )
         }
 
         if (showGameConfig) {

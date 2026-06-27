@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-data class ScoreRecord(val score: Int, val timestamp: Long)
+data class ScoreRecord(val score: Int, val bombCount: Int = 0, val timestamp: Long)
 
 class ScoreManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("scores", Context.MODE_PRIVATE)
@@ -21,10 +21,10 @@ class ScoreManager(context: Context) {
         }
     }
 
-    fun addScore(score: Int) {
-        if (score <= 0) return
+    fun addScore(score: Int, bombCount: Int) {
+        if (score <= 0 && bombCount == 0) return
         val currentScores = getTopScores().toMutableList()
-        currentScores.add(ScoreRecord(score, System.currentTimeMillis()))
+        currentScores.add(ScoreRecord(score, bombCount, System.currentTimeMillis()))
         val top10 = currentScores.sortedByDescending { it.score }.take(10)
         prefs.edit().putString("top_scores", gson.toJson(top10)).apply()
     }
